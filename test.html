@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Q1最小サンプル：messageなしでalert</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    label { display: block; margin-bottom: 8px; }
+    input { padding: 6px; }
+    button { padding: 8px 12px; margin-left: 8px; }
+    /* 下の #message は“使わない”けど、比較したくなった時のために置いてあります */
+    #message { margin-top: 12px; font-weight: bold; color: green; }
+  </style>
+</head>
+<body>
+  <h1>Q1検証：messageを使わずalertで結果表示</h1>
+
+  <!-- シンプルなフォーム -->
+  <form id="registerForm">
+    <label>
+      お名前：
+      <input id="name" type="text" placeholder="例：太郎" required />
+    </label>
+    <button id="submitBtn" type="submit">登録</button>
+  </form>
+
+  <!-- 比較用の表示場所（今回は使わない） -->
+  <p id="message"></p>
+
+  <script>
+    // フォーム要素の参照
+    const form = document.getElementById("registerForm");
+    const nameInput = document.getElementById("name");
+    const messageEl = document.getElementById("message"); // ← “使わない”けど比較用
+
+    // 送信イベント
+    form.addEventListener("submit", (e) => {
+      e.preventDefault(); // 送信時のページリロードを止める
+      const name = nameInput.value.trim();
+
+      // --- Q1：messageを使わず、alertで表示する ---
+      alert(`登録OK：${name}`);
+
+      // ↓↓↓ もし「固定の場所」に出したいなら、alertの代わりにこれ（比較用）
+      messageEl.textContent = `登録OK：${name}`;
+      messageEl.style.color = "green";
+
+      // 送信後の整理
+      form.reset();
+      nameInput.focus();
+    });
+  </script>
+</body>
+</html>
