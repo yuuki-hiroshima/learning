@@ -1,9 +1,19 @@
-const msg1 = document.getElementById("message");
-const msg2 = document.getElementById("message2");
+// お題1：数値ジャッジ（符号✕偶奇）
 
-msg1.textContent = "JavaScriptで変更した pタグ1";
-msg2.textContent = "JavaScriptで変更した pタグ2";
+n = 10
 
-const p = document.createElement("p");  // 紙を新しく作る
-p.textContent = "JavaScriptで作成した pタグ";
-document.body.appendChild(p);           // 教室の壁に貼る
+if (n % 2 === 0) {
+  if (n > 0) {
+    console.log("positive even");
+  } else if (n === 0) {
+    console.log("zero even");
+  } else {
+    console.log("negative even")
+  };
+} else {
+  if (n > 0) {
+    console.log("positive odd");
+  } else {
+    console.log("negative odd")
+  };
+};

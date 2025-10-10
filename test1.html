@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h1>テスト</h1>
+  
+  <input id="age" type="number">
+  <button id="send">送信</button>
+  <p id="result">ここに結果を表示</p>
+
+  <script>
+    // お題1：数値ジャッジ（符号✕偶奇）
+const ageInput = document.getElementById("age");
+const sendBtn = document.getElementById("send");
+const resultBox = document.getElementById("result");
+
+sendBtn.addEventListener("click", () => {
+  const n = Number(ageInput.value.trim());
+
+  if (Number.isNaN(n)) {
+    resultBox.textContent = "数字を入力してください。";
+    return;
+  }
+
+  let msg = "";
+  if (n % 2 === 0) {
+    if (n > 0) {
+      msg = "positive even";
+    } else if (n === 0) {
+      msg = "zero even";
+    } else {
+      msg = "negative even";
+    }
+  } else {
+    if (n > 0) {
+      msg = "positive odd";
+    } else {
+      msg = "negative odd";
+    }
+  };
+  
+  console.log(msg)
+  resultBox.textContent = msg;
+});
+
+  </script>
+</body>
+</html>
