@@ -8,40 +8,37 @@
 <body>
   <h1>テスト</h1>
   
-  <input id="age" type="number">
+  <input id="point" type="number">
   <button id="send">送信</button>
   <p id="result">ここに結果を表示</p>
 
   <script>
-    // お題1：数値ジャッジ（符号✕偶奇）
-const ageInput = document.getElementById("age");
-const sendBtn = document.getElementById("send");
-const resultBox = document.getElementById("result");
+  const pointInput = document.getElementById("point");
+  const sendBtn = document.getElementById("send");
+  const resultBox = document.getElementById("result");
 
-sendBtn.addEventListener("click", () => {
-  const n = Number(ageInput.value.trim());
+  pointInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendBtn.click();
+  });
 
-  if (Number.isNaN(n)) {
+  sendBtn.addEventListener("click", () => {
+    const point = Number(pointInput.value.trim());
+
+  if (Number.isNaN(point)) {
     resultBox.textContent = "数字を入力してください。";
     return;
   }
 
   let msg = "";
-  if (n % 2 === 0) {
-    if (n > 0) {
-      msg = "positive even";
-    } else if (n === 0) {
-      msg = "zero even";
-    } else {
-      msg = "negative even";
-    }
+  if (point < 0 || point > 100) {
+    msg = "Out of range";
+  } else if (point < 50) {
+    msg = "Try again!";
+  } else if (point >= 50 && point < 80) {
+    msg = "Good!";
   } else {
-    if (n > 0) {
-      msg = "positive odd";
-    } else {
-      msg = "negative odd";
-    }
-  };
+    msg = "Excellent!"
+  }
   
   console.log(msg)
   resultBox.textContent = msg;

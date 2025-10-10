@@ -1,16 +1,21 @@
-# お題1：数値ジャッジ（符号✕偶奇）
+# お題２：３段階の評価プログラム
 
-n = 0
+point = 100
 
-if n % 2 == 0:
-    if n > 0:
-        print("positive even")
-    elif n == 0:
-        print("zero even")
-    else:
-        print("negative even")
+if point < 0 or point > 100:
+    print("Out of range!")
+elif point < 50:
+    print("Try again!")
+elif point >= 50 and point < 80:
+    print("Good!")
 else:
-    if n > 0:
-        print("positive odd")
-    else:
-        print("negative odd")
+    print("Excellent!")
+
+# if point <= 100:
+#     print("Excellent!")
+# elif point >= 50 and point < 80:
+#     print("Good!")
+# elif point < 50:
+#     print("Try again!")
+# else:
+#     print("Out of range")
