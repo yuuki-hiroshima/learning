@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>合格判定アプリ</title>
+</head>
+<body>
+  <h1>合格判定アプリ</h1>
+
+  <label>
+    <input id="age" type="number" placeholder="年齢を入力してください。" min="0" max="150">
+  </label>
+
+  <label>
+    <input id="point" type="number" placeholder="点数を入力してください。" min="0" max="100">
+  </label>
+
+  <button id="send" type="button">送信</button>
+  <p id="result">結果をここに表示します</p>
+
+  <script>
+    const ageInput = document.getElementById("age");
+    const pointInput = document.getElementById("point");
+    const sendBtn = document.getElementById("send");
+    const resultBox = document.getElementById("result");
+
+    sendBtn.addEventListener("click", async () => {
+      const age = ageInput.valueAsNumber;
+      const point = pointInput.valueAsNumber;
+
+      if (Number.isNaN(age) || Number.isNaN(point)) {
+        resultBox.textContent = "両方に数字を入力してください。";
+        return;
+      }
+      
+      console.log("send payload:", {age: age, point: point});
+      
+      try {
+        const res = await fetch("/api/judge_passed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ age, point })
+        });
+
+        const data = await res.json();
+  
+        resultBox.textContent = data.ok ? data.message : data.message || "サーバー側でエラーが発生しました。"
+      } catch (e) {
+        resultBox.textContent = "通信エラーが発生しました。";
+        console.error(e);
+      }
+    });
+  </script>
+</body>
+</html>

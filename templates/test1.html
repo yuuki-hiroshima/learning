@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三角形の判定</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+
+    .center-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      width: 300px;
+    }
+
+    .result {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <form class="center-form">
+    <h1>三角形チェッカー</h1>
+    <div>三角形の和は180度</div>
+    <label>
+      角度A：
+      <input id="side_a" type="number" placeholder="1つ目の角度を入力" min="1" max="178">
+    </label>
+
+    <label>
+      角度B：
+      <input id="side_b" type="number" placeholder="2つ目の角度を入力" min="1" max="178">
+    </label>
+
+    <label>
+      角度C：
+      <input id="side_c" type="number" placeholder="3つ目の角度を入力" min="1" max="178">
+    </label>
+
+    <button id="send">チェック</button>
+
+    <p id="result" class="result">結果をここに表示</p>
+
+  </form>
+
+  <script>
+    const side_A = document.getElementById("side_a");
+    const side_B = document.getElementById("side_b");
+    const side_C = document.getElementById("side_c");
+    const sendBtn = document.getElementById("send");
+    const resultBox = document.getElementById("result");
+
+    sendBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const a_Side = side_A.valueAsNumber;
+      const b_Side = side_B.valueAsNumber;
+      const c_Side = side_C.valueAsNumber;
+
+      if (Number.isNaN(a_Side) || Number.isNaN(b_Side) || Number.isNaN(c_Side)) {
+        resultBox.textContent = "数字を入力してください。";
+        return;
+      }
+
+      if (a_Side + b_Side + c_Side !== 180) {
+        resultBox.textContent = "三角形ではありません。";
+        return;
+      }
+
+      console.log("send payload:", { side_a: a_Side, side_b: b_Side, side_c: c_Side }); // 送信前のデータチェックにめちゃくちゃ使えた！
+
+      const res = await fetch("/api/triangle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ a_Side, b_Side, c_Side }) // ここにキー名を指定してもよかった({ side_a: a_Side, ....})
+      });
+
+      const data = await res.json();
+
+      if (data.ok) {
+        resultBox.textContent = data.message;
+      } else {
+        resultBox.textContent = "サーバーでエラーが起きたようです。";
+      }
+    });
+    console.log("response JSON", data)
+  </script>
+</body>
+</html>
