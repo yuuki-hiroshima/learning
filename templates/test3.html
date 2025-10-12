@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>映画館チケット料金判定</title>
+  <style>
+/* ページ全体の基本設定 */
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #f7f9fc, #dfe9f3);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
+/* フォーム全体 */
+.container {
+  background-color: #fff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 340px;
+}
+
+/* タイトル */
+.container h1 {
+  text-align: center;
+  color: #333;
+  font-size: 1.4rem;
+  margin-bottom: 24px;
+}
+
+/* 各ジャンルの枠 */
+.group {
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 16px;
+  background-color: #fafafa;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.group:hover {
+  border-color: #0078d7;
+  background-color: #f0f8ff;
+}
+
+/* グループ見出し */
+.group h2 {
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #0078d7;
+}
+
+/* ラベルの配置 */
+label {
+  display: block;
+  margin: 6px 0;
+  color: #444;
+  cursor: pointer;
+}
+
+input[type="number"],
+input[type="radio"] {
+  margin-right: 8px;
+  accent-color: #0078d7;
+}
+
+/* 送信ボタン */
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #0078d7;
+  color: #fff;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+/* 結果表示 */
+#result {
+  margin-top: 20px;
+  text-align: center;
+  color: #333;
+  font-weight: bold;
+  background-color: #f4f4f4;
+  padding: 10px;
+  border-radius: 6px;
+}
+  </style>
+</head>
+<body>
+
+  <form class="container">
+    <h1>映画館のチケット判定</h1>
+
+    <div class="group">
+      <p>年齢を入力してください</p>
+      <input id="age" type="number" placeholder="年齢" min="0">
+    </div>
+
+    <div class="group">
+      <p>学生ですか？</p>
+      <label><input type="radio" name="student" value="true">はい</label>
+      <label><input type="radio" name="student" value="false">いいえ</label>
+    </div>
+
+    <div class="group">
+      <p>祝日ですか？</p>
+      <label><input type="radio" name="holiday" value="true">はい</label>
+      <label><input type="radio" name="holiday" value="false">いいえ</label>
+    </div>
+
+    <div class="group">
+      <p>居住地を選んでください</p>
+      <label><input type="radio" name="resident" value="local">地元のかた</label>
+      <label><input type="radio" name="resident" value="other">地元以外のかた</label>
+    </div>
+
+    <!-- typeの内容が重要（submitはフォームを送信、buttonはデータだけ送信） -->
+    <button id="send" type="button">送信</button> 
+
+    <p id="result">料金はこちらに表示されます。</p>
+  </form>
+  
+<script>
+  const ageInput = document.getElementById("age");
+  const sendBtn = document.getElementById("send");
+  const resultBox = document.getElementById("result");
+
+  sendBtn.addEventListener("click", async () => {
+    const age = ageInput.valueAsNumber;
+
+    // 【追加】選択済み要素をその場で取得（選択肢がいくつあってもOK）ただし選択が変わることも考慮し、ボタンを押したあとに処理を書くのが良い
+    const sEl = document.querySelector('input[name="student"]:checked');
+    const hEl = document.querySelector('input[name="holiday"]:checked');
+    const rEl = document.querySelector('input[name="resident"]:checked');
+
+    // 【追加】入力ミスを先にまとめて止める（年齢が未入力か数ではない。または、ラジオボタンが選ばれていない）
+    if (!Number.isFinite(age) || !sEl || !hEl || !rEl) {
+      resultBox.textContent = "年齢と各項目をすべて入力・選択してください。";
+      return;
+    } 
+
+    // 【追加】文字列 "true"/"false" → boolean へ
+    const student = (sEl.value === "true");
+    const holiday = (hEl.value === "true");
+    const resident = rEl.value;   // "local" or "other"
+
+    //　動作チェック用
+    // console.log("send payload:", {
+    //   age, student, holiday, resident,
+    //   types: { age: typeof age, student: typeof student, holiday: typeof holiday, resident: typeof resident }
+    // });
+
+    try {
+      const res = await fetch("/api/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ age, student, holiday, resident})
+      });
+
+      const data = await res.json();
+
+      resultBox.textContent = data.ok ? data.message : (data.message || "サーバーでエラーが起きました。");
+    } catch (e) {
+      resultBox.textContent = "通信エラーが発生しました。";
+      console.error(e);
+    }
+  });
+  </script>
+</body>
+</html>
