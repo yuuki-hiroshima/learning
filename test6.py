@@ -42,7 +42,7 @@ def ticket():
         return jsonify(ok=False, message="居住地の選択をしてください。"), 400
     
     if not isinstance(student, bool) or not isinstance(holiday, bool):
-        return jsonify(ok=True, message="学生と祝日の質問にチェックを入れてください。"), 400
+        return jsonify(ok=False, message="学生と祝日の質問にチェックを入れてください。"), 400
 
     PRICE = {
         "child": 800,
@@ -89,7 +89,7 @@ def ticket():
         category=category,
         price=price,
         label=label,
-        messaga=msg,
+        message=msg,
         echo={"age": age, "student": student, "holiday": holiday, "resident": resident},
     )
 
