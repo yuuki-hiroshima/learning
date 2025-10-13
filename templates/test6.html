@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新型チケット判別</title>
+</head>
+<body>
+  <h1>新型チケット判別</h1>
+
+  <form class="container">
+    <div class="group">
+      <p>年齢を入力してください。</p>
+      <input type="number" id="age" placeholder="年齢を入力">
+    </div>
+    <div class="group">
+      <p>学生ですか？</p>
+      <label><input type="radio" name="student" value="true">はい</label>
+      <label><input type="radio" name="student" value="false">いいえ</label>
+    </div>
+    <div class="group">
+      <p>祝日ですか？</p>
+      <label><input type="radio" name="holiday" value="true">はい</label>
+      <label><input type="radio" name="holiday" value="false">いいえ</label>
+    </div>
+    <div class="group">
+      <p>地元にお住まいですか？</p>
+      <label><input type="radio" name="resident" value="local">地元</label>
+      <label><input type="radio" name="resident" value="other">地元以外</label>
+    </div>
+
+    <button id="send" type="button">送信</button>
+
+    <p id="result" class="result">結果はここに表示します。</p>
+
+  </form>
+
+  
+</body>
+</html>
