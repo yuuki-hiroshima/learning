@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>チケット判別API・完成版</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 720px; margin: 24px auto; line-height: 1.7; }
+    .group { padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin: 12px 0; }
+    button { padding: 8px 12px; cursor: pointer; }
+    .result { padding: 12px; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+    thead th { background: #e0e0e0; }
+  </style>
+</head>
+<body>
+  <form class="container">
+    <h1>チケット判別API・完成版</h1>
+
+    <div class="group">
+      <p>年齢</p>
+      <input type="number" id="age" placeholder="例: 20" min="0">
+    </div>
+
+    <div class="group">
+      <p>学生ですか？</p>
+      <label><input type="radio" name="student" value="true">はい</label>
+      <label><input type="radio" name="student" value="false">いいえ</label>
+    </div>
+
+    <div class="group">
+      <p>祝日ですか？</p>
+      <label><input type="radio" name="holiday" value="true">はい</label>
+      <label><input type="radio" name="holiday" value="false">いいえ</label>
+    </div>
+
+    <div class="group">
+      <p>居住区</p>
+      <label><input type="radio" name="resident" value="local">地元</label>
+      <label><input type="radio" name="resident" value="other">地元以外</label>
+    </div>
+
+    <div class="group">
+      <p>会員ランク</p>
+      <select id="member">
+        <option value="none">非会員（割引なし）</option>
+        <option value="silver">シルバー（-100円）</option>
+        <option value="gold">ゴールド（-200円）</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <p>時間帯</p>
+      <select id="timeband">
+        <option value="morning">午前（-200円）</option>
+        <option value="afternoon">昼（±0円）</option>
+        <option value="night">夜（+100円）</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <p>クーポンコード（任意）</p>
+      <input id="coupon" type="text" placeholder="例: ABC1234">
+    </div>
+
+    <button id="send" type="button">送信</button>
+
+    <!-- 結果カードの置き場（divにしておく） -->
+    <div id="result" class="result" style="margin-top:12px;">こちらに結果を表示</div>
+
+    <h2>履歴</h2>
+    <button id="clear" type="button">履歴クリア</button>
+    <div id="history" style="margin-top:8px;"></div>
+  </form>
+
+  <script>
+    // 要素の取得
+    const ageEl      = document.getElementById("age");
+    const memberEl   = document.getElementById("member");
+    const timebandEl = document.getElementById("timeband");
+    const couponEl   = document.getElementById("coupon");
+    const resultBox  = document.getElementById("result");
+    const historyBox = document.getElementById("history");
+    const sendBtn    = document.getElementById("send");
+    const clearBtn   = document.getElementById("clear");
+
+    // 履歴データ（配列）
+    const history = [];
+
+    // 履歴テーブルを描画する関数（history → HTML）
+    function renderHistory(list) {
+      if (!list || list.length === 0) {
+        historyBox.innerHTML = "<p>まだ履歴がありません。</p>";
+        return;
+      }
+
+      const rows = list.map((h, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${h.category}</td>
+          <td>${h.base}</td>
+          <td style="color:${h.time < 0 ? 'green' : (h.time > 0 ? 'red' : 'black')}">
+            ${h.time >= 0 ? '+' : ''}${h.time}
+          </td>
+          <td style="color:${h.member < 0 ? 'green' : (h.member > 0 ? 'red' : 'black')}">
+            ${h.member >= 0 ? '+' : ''}${h.member}
+          </td>
+          <td><strong>${h.total}</strong></td>
+          <td class="mono">${h.ts ?? ""}</td>
+        </tr>
+      `).join("");
+
+      historyBox.innerHTML = `
+        <h3>送信履歴</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>カテゴリ</th>
+              <th>基本</th>
+              <th>時間帯</th>
+              <th>会員</th>
+              <th>合計</th>
+              <th>時刻</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    // 送信ボタン
+    sendBtn.addEventListener("click", async () => {
+      const age = ageEl.valueAsNumber;
+      const sEl = document.querySelector('input[name="student"]:checked');
+      const hEl = document.querySelector('input[name="holiday"]:checked');
+      const rEl = document.querySelector('input[name="resident"]:checked');
+
+      if (!Number.isFinite(age) || !sEl || !hEl || !rEl) {
+        resultBox.textContent = "年齢と各項目をすべて入力・選択してください。";
+        return;
+      }
+
+      const student = (sEl.value === "true");
+      const holiday = (hEl.value === "true");
+      const resident = rEl.value;
+      const member = memberEl.value;
+      const timeband = timebandEl.value;
+      const coupon = couponEl.value.trim();
+
+      const payload = { age, student, holiday, resident, member, timeband, coupon };
+
+      try {
+        const res = await fetch("/api/ticket", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+          resultBox.textContent = data.message || "サーバーでエラーが発生しました。";
+          return;
+        }
+
+        // 最新結果カード（#result に上書き）
+        resultBox.innerHTML = `
+          <div style="border:1px solid #ddd; border-radius:8px; padding:16px; background:#fafafa; margin-bottom:20px;">
+            <h3 style="margin-top:0;">🎟️ チケット結果</h3>
+            <p>カテゴリ：<strong>${data.category_label}</strong>${data.category_key ? `（${data.category_key}）` : ""}</p>
+            <p>基本料金：<strong>${data.base_price}円</strong></p>
+            <p>時間帯調整：${data.timeband_adj >= 0 ? '+' : ''}${data.timeband_adj}円</p>
+            <p>会員調整：${data.member_adj >= 0 ? '+' : ''}${data.member_adj}円</p>
+            <hr>
+            <p style="font-size:1.1em;">合計金額：<strong>${data.price}円</strong></p>
+          </div>
+        `;
+
+        // 履歴に1件追加して再描画
+        history.push({
+          category: data.category_label,
+          base:     data.base_price,
+          time:     data.timeband_adj,
+          member:   data.member_adj,
+          total:    data.price,
+          ts:       new Date().toLocaleString()
+        });
+        renderHistory(history);
+
+      } catch (e) {
+        resultBox.textContent = "通信エラーが発生しました。";
+        console.error(e);
+      }
+    });
+
+    // 履歴クリア
+    clearBtn.addEventListener("click", () => {
+      history.length = 0;      // 中身を空にする
+      renderHistory(history);  // 空の状態を表示
+    });
+  </script>
+</body>
+</html>

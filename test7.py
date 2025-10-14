@@ -139,13 +139,13 @@ def ticket():
     else:
         category = "senior"
 
-    price = PRICE[category]
+    base_price = PRICE[category]
     label = LABEL[category]
 
     member_adj = MEMBER.get(member)
     timeband_adj = TIMEBAND.get(timeband)
 
-    final_price = price + member_adj + timeband_adj
+    final_price = base_price + member_adj + timeband_adj
 
     if coupon == "FES2025":
         final_price = 1000
@@ -157,13 +157,13 @@ def ticket():
     else:
         delta = timeband_adj + member_adj
         sign = "+" if delta > 0 else ""
-        msg = f"カテゴリ;{label} / 基本:{price}円 / 調整:{sign}{delta}円 / 合計:{final_price}円"
+        msg = f"カテゴリ;{label} / 基本:{base_price}円 / 調整:{sign}{delta}円 / 合計:{final_price}円"
 
     return jsonify(
         ok=True,
-        category=category,
-        label=label,
-        base_price=price,
+        category_key=category,
+        category_label=label,
+        base_price=base_price,
         member_adj=member_adj,
         timeband_adj=timeband_adj,
         price=final_price,          # 最終価格を price に
