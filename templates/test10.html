@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チケット分類API</title>
+  <style>
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; }
+  textarea { width: 100%; height: 150px; }
+  pre { background: #f6f8fa; padding: 10px; }
+  button { margin-top: 12px; padding: 6px 10px; }
+</style>
+</head>
+<body>
+  <h1>チケット分類（for + if + dict応用）</h1>
+
+  <textarea id="jsonInput">{
+    "tickets": [
+    {"name": "太郎", "type": "student"},
+    {"name": "花子", "type": "adult"},
+    {"name": "陽菜", "type": "student"},
+    {"name": "健", "type": "student"},
+    {"name": "不明さん", "type": "unknown"},
+    {"name": "VIPさん", "type": "vip"}
+  ]
+}</textarea>
+
+  <button id="runBtn">分類してみる</button>
+
+  <h2>📊 結果</h2>
+  <pre id="result">（ここに結果が表示されます）</pre>
+
+  <script>
+    document.getElementById("runBtn").addEventListener("click", async () => {
+      const text = document.getElementById("jsonInput").value;
+      const result = document.getElementById("result");
+
+      try {
+        const payload = JSON.parse(text);       // textに入っているJSONデータを、JavaScriptのオブジェクトに変換して、payloadに格納
+        const res = await fetch("/api/group", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if (data.ok) {
+          const order = ["student", "adult", "unknown", "error"];
+          const summaryLines = order.map(k => `${k}: ${data.summary[k]}`);
+          const lines = [
+            "【集計】",
+            summaryLines.join("\n"),
+            "",
+            "【グループ別】",
+            data.formatted.join("\n")
+          ];
+          result.innerHTML = lines.join("\n");
+        } else {
+          result.innerHTML = "❌️ エラー: " + data.error;
+        }
+
+      } catch (err) {
+        result.innerHTML = "❌️ JSONの書式エラー: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
