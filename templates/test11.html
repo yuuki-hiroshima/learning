@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テスト3回目</title>
+</head>
+<body>
+  <h1>テスト3回目</h1>
+
+  <textarea id="jsonInput">{
+    "tickets": [
+    {"name": "太郎", "type": "student"},
+    {"name": "花子", "type": "adult"},
+    {"name": "陽香", "type": "student"},
+    {"name": "健", "type": "student"},
+    {"name": "不明さん", "type": "unknown"},
+    {"name": "VIP", "type": "vip"}
+  ]
+}</textarea>
+
+  <button id="runBtn">判定する</button>
+
+  <h2>📊 結果</h2>
+  <pre id="result">（ここに結果を表示）</pre>
+  
+  <script>
+    document.getElementById("runBtn").addEventListener("click", async () => {
+      const text = document.getElementById("jsonInput").value;
+      const result = document.getElementById("result");
+
+      try {
+        const payload = JSON.parse(text)
+        const res = await fetch("/api/group", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          const order = ["student", "adult", "unknown", "error"];
+          const summaryLines = order.map(k => `${k}: ${data.summary[k]}`)
+          const lines = [
+            "【集計】",
+            summaryLines.join("\n"),
+            "",
+            "【グループ別】",
+            data.formatted.join("\n")
+          ];
+          result.innerHTML = lines.join("\n");
+        } else {
+          result.innerHTML = "エラー:" + data.error;
+        }
+
+      } catch (err) {
+        result.innerHTML = "JSONの書式エラー:" + err
+      }      
+    });
+  </script>
+</body>
+</html>

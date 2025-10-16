@@ -1,20 +1,21 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>チケット分類API</title>
+<!DOCTYPE html> <!-- HTMLの宣言だよ〜（お約束） -->
+<html lang="ja"> <!-- このページは日本語だよ〜 -->
+<head> <!-- ここから頭の情報（設定まわり）だよ〜 -->
+  <meta charset="UTF-8"> <!-- 文字コードはUTF-8にして〜（日本語OK） -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- スマホでも見やすいように幅を調整して〜 -->
+  <title>チケット分類API</title> <!-- タブのタイトルだよ〜 -->
+  <!--  ちょっとだけ見た目を整えるよ〜（最小） -->
   <style>
-  body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; }
-  textarea { width: 100%; height: 150px; }
-  pre { background: #f6f8fa; padding: 10px; }
-  button { margin-top: 12px; padding: 6px 10px; }
-</style>
-</head>
-<body>
-  <h1>チケット分類（for + if + dict応用）</h1>
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 24px; } /* 文字と余白をほどよくして〜 */
+  textarea { width: 100%; height: 150px; } /* 入力エリアを広めにして〜 */
+  pre { background: #f6f8fa; padding: 10px; } /* 結果欄を読みやすくして〜 */
+  button { margin-top: 12px; padding: 6px 10px; } /* ボタンに少し余白をつけて〜 */
+</style> <!-- スタイルおしまい〜 -->
+</head> <!-- 頭の情報ここまでだよ〜 -->
+<body> <!-- ここから画面に見える部分だよ〜 -->
+  <h1>チケット分類（for + if + dict応用）</h1> <!-- ページの見出しだよ〜 -->
 
-  <textarea id="jsonInput">{
+  <textarea id="jsonInput">{ <!-- ここに送るJSONを直接書けるようにしておくよ〜 -->
     "tickets": [
     {"name": "太郎", "type": "student"},
     {"name": "花子", "type": "adult"},
@@ -23,46 +24,46 @@
     {"name": "不明さん", "type": "unknown"},
     {"name": "VIPさん", "type": "vip"}
   ]
-}</textarea>
+}</textarea> <!-- 入力エリアおしまい〜 -->
 
-  <button id="runBtn">分類してみる</button>
+  <button id="runBtn">分類してみる</button> <!-- 押したらサーバーに送るボタンだよ〜 -->
 
-  <h2>📊 結果</h2>
-  <pre id="result">（ここに結果が表示されます）</pre>
+  <h2>📊 結果</h2> <!-- 結果の見出しだよ〜 -->
+  <pre id="result">（ここに結果が表示されます）</pre> <!-- 結果を表示する場所だよ〜（preは整形してそのまま出す箱） -->
 
-  <script>
-    document.getElementById("runBtn").addEventListener("click", async () => {
-      const text = document.getElementById("jsonInput").value;
-      const result = document.getElementById("result");
+  <script> /* ここから動きをつけるJavaScriptだよ〜 */
+    document.getElementById("runBtn").addEventListener("click", async () => { // ボタンが押されたら〜（クリックの合図を受け取って）
+      const text = document.getElementById("jsonInput").value; // 入力欄の文字をそのまま取り出して〜
+      const result = document.getElementById("result"); // 結果を出す場所を持ってきて〜
 
-      try {
-        const payload = JSON.parse(text);       // textに入っているJSONデータを、JavaScriptのオブジェクトに変換して、payloadに格納
-        const res = await fetch("/api/group", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+      try { // フロント側でも安全ネットをはっておこう〜
+        const payload = JSON.parse(text);       // 文字のJSONを、JSのオブジェクトに変えてpayloadに入れて〜
+        const res = await fetch("/api/group", { // サーバーのAPIに送って〜（POSTで）
+          method: "POST", // 送る方法はPOSTにして〜
+          headers: { "Content-Type": "application/json" }, // JSONを送るよって伝えて〜
+          body: JSON.stringify(payload) // オブジェクトをJSON文字に戻して箱につめて〜
         });
-        const data = await res.json();
+        const data = await res.json(); // サーバーからの返事（JSON）をオブジェクトに戻して〜
         
-        if (data.ok) {
-          const order = ["student", "adult", "unknown", "error"];
-          const summaryLines = order.map(k => `${k}: ${data.summary[k]}`);
-          const lines = [
-            "【集計】",
-            summaryLines.join("\n"),
-            "",
-            "【グループ別】",
-            data.formatted.join("\n")
+        if (data.ok) { // サーバー側で成功してたら〜
+          const order = ["student", "adult", "unknown", "error"]; // この順番で表示したいよ〜
+          const summaryLines = order.map(k => `${k}: ${data.summary[k]}`); // 順番どおりに「key: 値」の形に並べて〜
+          const lines = [ // 画面に出す文章を1行ずつ用意して〜
+            "【集計】", // 見出しだよ〜
+            summaryLines.join("\n"), // 集計を改行でつないで〜
+            "", // 空行でちょっと区切って〜
+            "【グループ別】", // もう一つの見出しだよ〜
+            data.formatted.join("\n") // サーバーで整えた文字たちをそのまま改行でつないで〜
           ];
-          result.innerHTML = lines.join("\n");
-        } else {
-          result.innerHTML = "❌️ エラー: " + data.error;
+          result.innerHTML = lines.join("\n"); // 文章をまとめて結果欄に流し込んで〜（改行込み）
+        } else { // サーバー側で失敗してたら〜
+          result.innerHTML = "❌️ エラー: " + data.error; // エラーメッセージを出しておこう〜
         }
 
-      } catch (err) {
-        result.innerHTML = "❌️ JSONの書式エラー: " + err;
+      } catch (err) { // JSONの書き方ミスや通信の想定外が来たら〜
+        result.innerHTML = "❌️ JSONの書式エラー: " + err; // どこかで失敗したよって教えて〜
       }
     });
-  </script>
-</body>
-</html>
+  </script> <!-- スクリプトおしまい〜 -->
+</body> <!-- 画面の中身はここまでだよ〜 -->
+</html> <!-- ページの終わりだよ〜 -->
