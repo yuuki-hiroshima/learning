@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チャット分類API（try応用）</title>
+    <style>
+      .errors {
+        color: #b91c1c;
+        margin-top: 1em;
+      }
+      .errors li {
+        margin-left: 1em;
+        list-style-type: "・ ";
+      }
+    </style>
+</head>
+<body>
+    <h1>🎟️ チケット分類（try付き）</h1>
+
+    <textarea id="jsonInput">{
+      "tickets": [
+      {"name": "太郎", "type": "student"},
+      {"name": "花子", "type": "adult"},
+      {"name": "", "type": "student"},
+      {"type": "student"},
+      {"name": "不明さん", "type": null},
+      "これは壊れたデータ"
+    ]  
+}</textarea>
+
+  <button id="runBtn">分類してみる</button>
+  <h2>📊 結果</h2>
+  <pre id="result">（ここに結果が表示されます）</pre>
+
+  <h3>❗️ エラー詳細</h3>
+  <ul id="errorList" class="errors"></ul>
+  <script>
+    document.getElementById("runBtn").addEventListener("click", async () => {
+      const text = document.getElementById("jsonInput").value;
+      const result = document.getElementById("result");
+      const errorList = document.getElementById("errorList");
+
+      // 前回の表示をクリア
+      result.innerText = "";
+      errorList.innerHTML = "";
+
+      try {
+        const payload = JSON.parse(text);
+        const res = await fetch("/api/group", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          const order = ["student", "adult", "unknown", "error"];
+          const summaryLines = order.map(k => `${k}: ${data.summary[k]}`);
+          
+          const errorLines = (data.errors || []).map(  // エラーの可視化：errorsの配列があればリスト化
+            e => `#${e.index} 「${e.name}」: ${e.message}`
+          );
+          
+          const blocks = [
+            "【集計】",
+            summaryLines.join("\n"),
+            "",
+            "【グループ別】",
+            data.formatted.join("\n")
+          ];
+          result.innerText = blocks.join("\n");
+
+          // エラーリストがある場合はHTMLとして作る
+          if (data.errors && data.errors.length > 0) { 
+            const html = data.errors
+              .map(e => `<li>#${e.index} 「${e.name}」: ${e.message} </li>`)
+              .join("");
+            errorList.innerHTML = html;  // 赤文字リストとして出力
+          }
+        } else {
+          result.innerText = "❌️ サーバーエラー: " + data.error;
+        }
+      } catch (err) {
+        result.innerText = "❌️ JSONの書式エラー: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
