@@ -1,0 +1,9 @@
+{
+  "name": "田中太郎",
+  "age": 17,
+  "scores": {
+    "math": 85,
+    "english": 78,
+    "science": 90
+  }
+}
