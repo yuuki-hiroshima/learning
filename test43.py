@@ -1,12 +1,5 @@
-# load_notes(filepath)JSONファイルを読み込む（なければ空リストを返す）
-# save_notes(data, filepath)JSONファイルを保存する
-# next_id(data)新しいIDを発行する
-# add_note()新しいメモを作成する（Create）
-# list_notes()登録されたメモを一覧表示する（Read）
-# update_note()指定IDのメモを更新する（Update）
-# delete_note()指定IDのメモを削除する（Delete）
-# parse_args()argparseでコマンド引数を解析する
-# main()全体の流れを制御する（分岐）
+# argparse学習のため、test42.pyからロジックをコピー
+# main部分をargparseに変更予定
 
 import os
 import json
