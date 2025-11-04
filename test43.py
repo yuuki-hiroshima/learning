@@ -1,9 +1,56 @@
 # argparse学習のため、test42.pyからロジックをコピー
-# main部分をargparseに変更予定
+# main部分にargparseを追加
+# コマンドラインと対話型メニュー入力の両方が使える仕様になった
 
 import os
 import json
 import datetime
+import argparse
+
+# 【追加】コマンド引数を定義し、読み取る
+def parse_args():
+    formatter = argparse.RawTextHelpFormatter #ヘルプの見た目を整えるための設定（改行をそのまま出す）
+    
+    parser = argparse.ArgumentParser(
+        description="JSONメモアプリ(CLI版)\nコマンド引数で追加・一覧・更新・削除ができます。",
+        epilog=(
+            "【使い方サンプル】\n"
+            "  ➊ 追加（タイトルのみ）\n"
+            "     python3 test43.py --add \"買い物\"\n"
+            "\n"
+            "  ➋ 追加（タイトル＋本文）\n"
+            "     python3 test43.py --add \"買い物\" --body \"牛乳とパン\"\n"
+            "\n"
+            "  ➌ 一覧表示\n"
+            "     python3 test43.py --list\n"
+            "\n"
+            "  ➍ 更新（ID 3 を変更）\n"
+            "     python3 test43.py --update 3 --title \"予定変更\" --newbody \"牛乳→豆乳に変更\"\n"
+            "\n"
+            "  ➎ 削除（ID 2 を削除）\n"
+            "     python3 test43.py --delete 2\n"
+            "\n"
+            "  ➏ 引数なしで従来メニュー\n"
+            "     python3 test43.py\n"
+        ),
+        formatter_class = formatter # 改行付きのヘルプをそのまま表示する
+    )
+
+    # 操作スイッチは相互排他（どれか1つ）オプションはセットで使うのでグループ外
+    group = parser.add_mutually_exclusive_group()
+
+    # 操作スイッチ（どれか1つを選ぶ想定）
+    group.add_argument("--add", help="新しいメモを追加（タイトルを指定）")
+    group.add_argument("--list", action="store_true", help="メモ一覧を表示")
+    group.add_argument("--update", type=int, help="指定IDのメモを更新")
+    group.add_argument("--delete", type=int, help="指定IDのメモを削除")
+
+    # オプション（補助項目）
+    parser.add_argument("--body", help="本文（--add時の補助）")
+    parser.add_argument("--title", help="新しいタイトル（--update時の補助）")
+    parser.add_argument("--newbody", help="新しい本文（--update時の補助）")
+
+    return parser.parse_args()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 NOTES_PATH = os.path.join(BASE_DIR, "data", "notes.json")
@@ -178,6 +225,89 @@ def delete_note(data, filepath):
         return
 
 def main():
+    args = parse_args() # 始めにコマンド引数を読み込み、中身が有れば実行。なければ従来のメニューへ進む
+
+    if args.add: # ①　追加
+        data = load_notes(NOTES_PATH)
+
+        # add_noteは今のインタラクティブ入力版のままでも可。
+        # ここでは「タイトルと本文を事前指定できるパス」を用意する書き方がきれい。
+        title = args.add.strip()
+        body = (args.body or "").strip()
+        if not title:
+            print("タイトルは必須です。")
+            return
+        
+        # 既存の add_note(data) を使う場合は、入力を代入してから呼ぶ形にするか、
+        # ここで直接レコードを組み立ててもOK。
+        new_id = next_id(data)
+        now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        note = {
+            "id": new_id,
+            "title": title,
+            "body": (body or "（本文なし）"),
+            "created_at": now
+        }
+        data.append(note)
+        save_notes(data, NOTES_PATH)
+        print("登録が完了しました。")
+        return
+    
+    if args.list: # ② 一覧
+        data = load_notes(NOTES_PATH)
+        list_notes(data)
+        return
+    
+    if args.update is not None: # ③ 更新（--update でIDは必須。--title /--newbody は任意）
+        
+        if (args.title is None) and (args.newbody is None):
+            print("変更指定がないため、更新は行いませんでした。")
+            return
+
+        data = load_notes(NOTES_PATH)
+        target_id = args.update
+
+        # 既存の update_note(data) は対話入力前提なので、
+        # 「引数から来た値で置き換えるモード」を簡易追加するやり方が分かりやすい。
+        # ここでは最小で、main側で置き換えてしまう例を使う。
+        found_index = None
+        for i, row in enumerate(data):
+            if row.get("id") == target_id:
+                found_index = i
+                break
+        
+        if found_index is None:
+            print(f"該当するIDはありません: {target_id}")
+            return
+        
+        current = data[found_index]
+        new_title = args.title if args.title is not None else current.get("title", "")
+        new_body = args.newbody if args.newbody is not None else current.get("body", "")
+
+
+        
+        current["title"] = new_title
+        current["body"] = new_body
+        current["updated_at"] = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+        save_notes(data, NOTES_PATH)
+        print(f"更新が完了しました（#{target_id}）。")
+        return
+    
+    if args.delete is not None: # ④ 削除
+        data = load_notes(NOTES_PATH)
+        before = len(data)
+        new_list = [row for row in data if row.get("id") != args.delete]
+        after = len(new_list)
+        if before == after:
+            print(f"該当のIDがありません: {args.delete}")
+            return
+        
+        save_notes(new_list, NOTES_PATH)
+        print(f"削除しました（#{args.delete}）。現在の件数: {after}")
+        return
+
+    # --- 引数が何も無いときは、従来のメニューへフォールバック ---
     while True:
         print("\n=== メモアプリ ===")
         print("1. 追加")
