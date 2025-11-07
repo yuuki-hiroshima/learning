@@ -7,6 +7,10 @@ import json
 import datetime
 import argparse
 
+# 入力の制限
+MAX_TITLE_LEN = 100
+MAX_BODY_LEN = 1000
+
 # 【追加】コマンド引数を定義し、読み取る
 def parse_args():
     formatter = argparse.RawTextHelpFormatter #ヘルプの見た目を整えるための設定（改行をそのまま出す）
@@ -74,13 +78,37 @@ def load_notes(filepath):
         return []
 
 def save_notes(data, filepath):
+    """メモデータをJSONファイルに保存する（エラー時は内容を説明的に出力）"""
     try:
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "w", encoding="utf-8") as f:
+        dirpath = os.path.dirname(filepath)
+        os.makedirs(dirpath, exist_ok=True)
+        tmp_path = os.path.join(dirpath, ".notes.json.tmp")
+
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-            print("JSONファイルに保存しました。")
+        
+        os.replace(tmp_path, filepath)
+
+        print("JSONファイルに保存しました。")
+    except PermissionError:
+        print("保存に失敗しました:書き込み権限がありません。")
+        print("対処方法:フォルダのアクセス権限を確認してください。")
+    except FileNotFoundError:
+        print("保存に失敗しました:保存先フォルダが存在しません。")
+        print("対処:フォルダ構成を確認してください（data/ フォルダなど）。")
+    except json.JSONDecodeError:
+        print("保存に失敗しました:JSON形式の変換中にエラーが発生しました。")
+        print("対処:特殊文字や構造の不整合を確認してください。")
     except Exception as e:
-        print(f"JSONファイル保存中に予期せぬエラーが起きました: {e}")
+        print("保存処理で予期せぬエラーが発生しました。")
+        print(f"詳細情報: {type(e).__name__} - {e}")
+        print("対処:一度プログラムを再起動し、再度お試しください。")
+    finally:
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
 
 def next_id(data):
     if not data: return 1
@@ -91,13 +119,17 @@ def add_note(data):
     try:
         while True:
             new_id = next_id(data)
-            title = input("タイトルを入力してください: ").strip()
-            if not title:
-                print("タイトルは必須です。")
+
+            title_raw = input("タイトルを入力してください: ").strip()
+            title = validate_title(title_raw)
+            if title is None:
                 continue
-            body = input("本文を入力してください: ").strip()
-            if not body:
-                body = "（本文なし）"
+
+            body_raw = input("本文を入力してください: ").strip()
+            body = validate_body(body_raw)
+            if body is None:
+                continue
+
             now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
             note = {
@@ -114,6 +146,7 @@ def add_note(data):
 def list_notes(data):
     if not data:
         print("一覧表示できるデータがありません。")
+        print("まずは `--add \"タイトル\" --body \"本文\"` で1件登録してみましょう。")
         return
     print(f"===== メモ一覧{len(data)}件 =====")
     for row in data:
@@ -223,6 +256,37 @@ def delete_note(data, filepath):
     except Exception as e:
         print(f"データ削除中に予期せぬエラーが起きました: {e}")
         return
+    
+# 【追加】タイトル検証：空白のみ/長すぎ/改行を防ぐ
+def validate_title(raw):
+    title = (raw or "").strip()
+    if title == "":
+        error("タイトルは必須です。", "空白以外の文字を入れてください。例: --add \"買い物\"")
+        return None
+    if "\n" in title:
+        title = title.replace("\n", " ")
+    if len(title) > MAX_TITLE_LEN:
+        error(f"タイトルが長すぎます({len(title)}文字)", f"上限は {MAX_TITLE_LEN} 文字です。短くしてください。")
+        return None
+    return title
+
+# 【追加】本文検証：長すぎ/改行はそのまま許容（複数行OK）、未指定は既定値
+def validate_body(raw):
+    if raw is None:
+        return "(本文なし)"
+    body = str(raw).strip()
+    if body == "":
+        return "(本文なし)"
+    if len(body) > MAX_BODY_LEN:
+        error(f"本文が長すぎます({len(body)}文字)", f"上限は {MAX_BODY_LEN} 文字です。要点を短くまとめてください。")
+        return None
+    return body
+
+# 【追加】共通のエラー表示（短い案内つき）
+def error(msg, hint=None):
+    print(f"{msg}")
+    if hint:
+        print(f"対処: {hint}")
 
 def main():
     args = parse_args() # 始めにコマンド引数を読み込み、中身が有れば実行。なければ従来のメニューへ進む
@@ -232,10 +296,12 @@ def main():
 
         # add_noteは今のインタラクティブ入力版のままでも可。
         # ここでは「タイトルと本文を事前指定できるパス」を用意する書き方がきれい。
-        title = args.add.strip()
-        body = (args.body or "").strip()
-        if not title:
-            print("タイトルは必須です。")
+        
+        title = validate_title(args.add)
+        if title is None:
+            return
+        body = validate_body(args.body)
+        if body is None:
             return
         
         # 既存の add_note(data) を使う場合は、入力を代入してから呼ぶ形にするか、
@@ -277,13 +343,27 @@ def main():
                 break
         
         if found_index is None:
-            print(f"該当するIDはありません: {target_id}")
+            error(f"該当するIDはありません: {target_id}",
+                  hint="まず `--list` でIDを確認してください。新規作成は `--add` です。")
             return
         
         current = data[found_index]
-        new_title = args.title if args.title is not None else current.get("title", "")
-        new_body = args.newbody if args.newbody is not None else current.get("body", "")
 
+        if args.title is not None:
+            checked = validate_title(args.title)
+            if checked is None:
+                return
+            new_title = checked
+        else:
+            new_title = current.get("title", "")
+        
+        if args.newbody is not None:
+            checked = validate_body(args.newbody)
+            if checked is None:
+                return
+            new_body = checked
+        else:
+            new_body = current.get("body", "")
 
         
         current["title"] = new_title
@@ -300,7 +380,8 @@ def main():
         new_list = [row for row in data if row.get("id") != args.delete]
         after = len(new_list)
         if before == after:
-            print(f"該当のIDがありません: {args.delete}")
+            error(f"該当のIDがありません: {args.delete}",
+                hint="`--list` で存在するIDを確認してから再実行してください。")
             return
         
         save_notes(new_list, NOTES_PATH)
