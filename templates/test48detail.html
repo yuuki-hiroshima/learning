@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>メモ詳細 #{{ note.id }}</title>
+  <style>
+    body { font-family: sans-serif; background:#f9f9f9; margin:40px; }
+    .box { background:#fff; padding:16px; border-radius:8px; max-width:800px; }
+    .meta { color:#666; font-size:14px; margin-bottom:12px; }
+    pre  { white-space:pre-wrap; word-break:break-word; background:#fafafa; padding:12px; border-radius:6px; border:1px solid #eee; }
+    a { color:#333; text-decoration:none; }
+    .row { margin:10px 0; }
+  </style>
+</head>
+<!-- 追加：更新完了のワンショット通知（/notes/<id>?updated=1） -->
+{% if request.args.get('updated') %}
+  <p style="background:#eaffea;border:1px solid #b6e3b6;padding:8px 12px;border-radius:6px;max-width:800px;">
+    ✅ メモを更新しました。
+  </p>
+{% endif %}
+<body>
+  <div class="box">
+    <div class="row">
+      <h1 style="margin: 0 0 6px;">{{ note.title }}</h1>
+      <div class="meta">
+        ID: #{{ note.id }} ／
+        作成: {{ (note.created_at or "")[:16].replace("T"," ") }}
+        {% if note.updated_at %}
+          ／ 更新: {{ (note.updated_at or "")[:16].replace("T"," ") }}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row">
+      <h3 style="margin: 0 0 6px;">本文</h3>
+      <pre>{{ note.body }}</pre>
+    </div>
+
+    <!-- 末尾の戻りリンク付近に編集導線を追加 -->
+    <div class="row" style="margin-top:18px;">
+      <a href="/">← 一覧へ戻る</a>
+      <span style="margin:0 8px; color:#999;">|</span>
+      <a href="/notes/{{ note.id }}/edit">✏️ このメモを編集</a>
+    </div>
+  </div>
+</body>
+</html>

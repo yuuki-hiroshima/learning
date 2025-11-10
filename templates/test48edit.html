@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>メモ編集 #{{ note.id }}</title>
+  <style>
+    body { font-family: sans-serif; background:#f9f9f9; margin:40px; }
+    .box  { background:#fff; padding:16px; border-radius:8px; max-width:720px; }
+    .row  { margin:12px 0; }
+    label { display:block; margin-bottom:6px; color:#333; }
+    input[type="text"], textarea {
+      width:100%; padding:8px 10px; border:1px solid #ccc; border-radius:6px;
+    }
+    button { padding:8px 14px; border:none; background:#333; color:#fff; border-radius:6px; cursor:pointer; }
+    .meta { color:#666; font-size:14px; margin-bottom:12px; }
+    .err { color:#b00020; margin:0 0 12px; }
+    a { color:#333; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1 style="margin: 0 0 6px;">メモを編集</h1>
+
+    <!-- 何のデータ？ → 現在のIDと作成/更新日時（読み取り専用のメタ情報） -->
+    <div class="meta">
+      ID: #{{ note.id }} ／
+      作成: {{ (note.created_at or "")[:16].replace("T"," ") }}
+      {% if note.updated_at %}
+        ／ 最終更新: {{ (note.updated_at or "")[:16].replace("T"," ") }}
+      {% endif %}
+    </div>
+
+      {% if error %}
+      <p class="err">❌ {{ error }}</p>
+      {% endif %}
+
+      <!-- 送信先：/notes/<id>/edit（POST）→ サーバが値を検証 → JSONに保存 → /notes/<id> へ戻す -->
+      <form method="post" action="/notes/{{ note.id }}/edit">
+        <div class="row">
+          <label for="title">タイトル（必須）</label>
+          <input type="text" id="title" name="title"
+                 value="{{ (last_title if last_title is defined else note.title) or '' }}"
+                 required>
+        </div>
+
+        <div class="row">
+          <label for="body">本文（省略可）</label>
+          <textarea name="body" id="body" rows="8">{{ (last_body if last_body is defined else note.body) or '' }}</textarea>
+        </div>
+
+        <div class="row">
+          <button type="submit">更新する</button>
+          <a href="/notes/{{ note.id }}" style="margin-left: 12px;">キャンセル（詳細へ戻る）</a>
+        </div>
+      </form>
+    </div>
+</body>
+</html>

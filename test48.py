@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, abort
 import json
 import os
 import datetime
@@ -44,6 +44,76 @@ def validate_title(raw):        # タイトルの空白や改行を除去する�
 def validate_body(raw):         # 本文が空なら既定文を入れる関数
     body = (raw or "").strip()
     return body if body else "(本文なし)"
+
+def find_note_by_id(notes, note_id):    # JSON → Python化した一覧から、指定IDの1件を取り出す。
+    """id が一致するメモを返す。無ければ None。"""
+    for row in notes:
+        if row.get("id") == note_id:
+            return row
+    return None
+
+@app.route("/notes/<int:note_id>")
+def show(note_id):
+    """
+    データの流れ：
+      URLの <note_id> を受け取る
+        → notes.json を読み込んで Python のリストにする
+        → 指定 id の1件を探す（find_note_by_id）
+        → 見つかれば HTML に “その1件” を渡して表示
+        → 無ければ 404（存在しないID）を返す
+    """
+    notes = load_notes(NOTES_PATH)
+    note = find_note_by_id(notes, note_id)
+
+    if note is None:
+        abort(404, description=f"Note #{note_id} not found.")
+
+    return render_template("test48detail.html", note=note)
+
+@app.route("/notes/<int:note_id>/edit", methods=["GET", "POST"])
+def edit(note_id):
+    """
+    データの流れ：
+      GET  → notes.json を読み込み → id一致の1件を探す → 既存値をフォームに流し込んで返す
+      POST → フォーム値を受け取り → 検証 → notes.json を読み込み
+             → 対象の辞書を書き換え（title/body/updated_at）
+             → JSONへ保存 → 詳細ページへリダイレクト（?updated=1）
+    """
+    # ① まず全件をロード（データの倉庫をPythonのリストとして取り出す）
+    notes = load_notes(NOTES_PATH)
+
+    # ② 表示/更新対象の1件を特定（見つからなければ404）
+    note = find_note_by_id(notes, note_id)
+    if note is None:
+        abort(404, description=f"Note #{note_id} not found.")
+
+    # ③ GET：既存の値をフォームに入れて返す（画面はまだ読み取り専用）
+    if request.method == "GET":
+        return render_template("test48edit.html", note=note, error=None)
+
+    # ④ POST：フォーム送信（新しい値の入口）
+    new_title = validate_title(request.form.get("title"))
+    new_body = validate_body(request.form.get("body"))
+
+    # ⑤ 入力エラー：保存はせず、エラーメッセージ付きでフォームへ差し戻す
+    if new_title is None:
+        return render_template(
+            "test48edit.html", note=note, error="タイトルは必須です。",
+            last_title=request.form.get("title", ""),
+            last_body=request.form.get("body", "")
+        )
+    
+    # ⑥ ここで状態変更：Pythonの辞書を上書き（1件分）
+    note["title"] = new_title
+    note["body"] = new_body
+    now = __import__("datetime").datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    note["updated_at"] = now
+
+    # ⑦ 全体（notesリスト）をJSONに書き戻す。永続化
+    save_notes(notes, NOTES_PATH)
+
+    # ⑧ 完了後は詳細ページへ戻す（updated=1 で更新完了を伝える）
+    return redirect(url_for("show", note_id=note_id, updated=1))
 
 @app.route("/add", methods=["GET", "POST"])
 def add():
