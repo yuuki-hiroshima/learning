@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>メモ一覧</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; margin: 40px; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { padding: 8px 12px; border-bottom: 1px solod #ddd; text-align: left; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <h1>メモ一覧</h1>
+  
+  <!-- 追加直後のワンショット通知（保存はもう終わっている状態） -->
+  {% if request.args.get('added') %}
+    <p style="background:#eaffea;border:1px solid #b6e3b6;padding:8px 12px;border-radius:6px;max-width:640px;">
+      ✅️ メモを追加しました。
+    </p>
+  {% endif %}
+
+  <p style="margin:12px 0;">
+    <a href="/add" style="display:inline-block;background:#333;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;">＋ メモを追加</a>
+  </p>
+
+  <!-- {{ notes }} はPythonから受け取ったリストデータ -->
+  {% if notes %}
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>タイトル</th>
+        <th>作成日時</th>
+      </tr>
+
+      <!-- notesの中身を1件ずつ取り出して行を作成 -->
+      {% for note in notes %}
+      <tr>
+        <th>{{ note.id }}</th>
+        <th>{{ note.title }}</th>
+        <th>{{ note.created_at[:16].replace("T", " ") }}</th>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>まだメモがありません。</p>
+  {% endif %}
+</body>
+</html>
