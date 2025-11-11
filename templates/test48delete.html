@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>メモ削除の確認 #{{ note.id }}</title> <!-- 消そうとしている番号をタイトル部分に表示 -->
+  <style>
+    body { font-family: sans-serif; background:#f9f9f9; margin:40px; }
+    .box  { background:#fff; padding:16px; border-radius:8px; max-width:720px; }
+    .meta { color:#666; font-size:14px; margin:6px 0 16px; }
+    .danger { background:#fff7f7; border:1px solid #f2caca; padding:12px; border-radius:6px; }
+    .btns { display:flex; gap:12px; margin-top:16px; }
+    .btn-danger { background:#c62828; color:#fff; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; }
+    .btn-ghost  { background:#eee; color:#333; text-decoration:none; padding:8px 14px; border-radius:6px; }
+    pre  { white-space:pre-wrap; word-break:break-word; background:#fafafa; padding:12px; border-radius:6px; border:1px solid #eee; }
+    a { color:#333; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1 style="margin: 0 0 8px;">このメモを削除してもいい？</h1>
+
+    <div class="meta">
+      ID: #{{ note.id }}　／
+      作成: {{ (note.created_at or "")[:16].replace("T"," ") }}
+      {% if note.updated_at %}
+        ／ 最終更新: {{ (note.updated_at or "")[:16].replace("T", " ") }}
+      {% endif %}
+    </div>
+
+    <div class="danger">
+      <p style="margin: 0 0 8px;">⚠️ この操作は取り消せません。本当に削除しますか？</p>
+      <p style="margin: 0;">タイトル：<strong>{{ note.title }}</strong></p>
+    </div>
+
+    <h3 style="margin: 18px 0 6px;">本文（参考）</h3>
+    <pre>{{ note.body }}</pre>
+
+    <!-- フォームを送ると「POST」になる ＝ サーバーで削除が行われ、一覧へ戻る -->
+    <form method="post" action="/notes/{{ note.id }}/delete" class="btns">
+      <button type="submit" class="btn-danger">🗑️ 削除する</button>              <!-- 押したら POST -->
+      <a class="btn-ghost" href="/notes/{{ note.id }}">キャンセル（詳細へ戻る）</a> <!-- 一覧へ戻るだけのリンク -->
+    </form>
+  </div>
+</body>
+</html>

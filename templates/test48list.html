@@ -21,6 +21,13 @@
     </p>
   {% endif %}
 
+  <!-- 削除直後のワンショット通知（削除はもう終わっている状態） -->
+  {% if request.args.get('deleted') %}
+    <p style="background:#fff7f7;border:1px solid #f2caca;padding:8px 12px;border-radius:6px;max-width:640px;">
+      🗑️ メモを削除しました。
+    </p>
+  {% endif %}
+
   <p style="margin:12px 0;">
     <a href="/add" style="display:inline-block;background:#333;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;">＋ メモを追加</a>
   </p>
@@ -32,18 +39,19 @@
         <th>ID</th>
         <th>タイトル</th>
         <th>作成日時</th>
+        <th>操作</th>
       </tr>
 
       <!-- notesの中身を1件ずつ取り出して行を作成 -->
       {% for note in notes %}
       <tr>
-        <th>{{ note.id }}</th>
+        <td>{{ note.id }}</td>
+        <td><a href="/notes/{{ note.id }}" style="color:#333;text-decoration:none;">{{ note.title }}</a></td>
+        <td>{{ note.created_at[:16].replace("T", " ") }}</td>
         <td>
-          <a href="/notes/{{ note.id }}" style="color:#333;text-decoration:none;">
-            {{ note.title }}
-          </a>
+          <a href="/notes/{{ note.id }}/edit" style="margin-right:8px;">✏️ 編集</a>
+          <a href="/notes/{{ note.id }}/delete" style="color:#c62828;">🗑️ 削除</a>
         </td>
-        <th>{{ note.created_at[:16].replace("T", " ") }}</th>
       </tr>
       {% endfor %}
     </table>

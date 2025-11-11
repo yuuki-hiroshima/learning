@@ -152,6 +152,24 @@ def add():
     # ⑦ 一覧へ戻す（?added=1 で追加完了を伝える小さなフラグ）
     return redirect(url_for("index", added=1))
 
+@app.route("/notes/<int:note_id>/delete", methods=["GET", "POST"])  # 削除のページに来たとき、直下の関数を動かす。
+def delete(note_id):
+
+    notes = load_notes(NOTES_PATH)                                  # JSONファイルを読み込む
+    note = next((n for n in notes if n.get("id") == note_id), None) # 指定されたIDのメモを探す（なければ None）
+    if note is None:                                                # 見つからない場合（IDが違うなど）
+        abort(404)                                                  # 「ページが見つかりません」と返す
+
+    if request.method == "GET":                                     # 削除の確認画面を表示する段階
+        return render_template("test48delete.html", note=note)      # 結果をフロントに返す
+    
+    # ここから先は「POST」。（ユーザーが「削除します」のボタンを押したあとの処理）
+    new_list = [n for n in notes if n.get("id") != note_id]         # ユーザーが選んだID以外のデータを格納して新しいリストを作る
+    save_notes(new_list, NOTES_PATH)                                # 新しいリストでJSONファイルを上書き
+    print(f"🗑️ ID={note_id} のメモを削除しました。")
+
+    return redirect(url_for("index", deleted=1))                     # 削除が終わったら一覧ページへ戻る（delete=1 は「削除した」ことの合図）
+
 @app.route("/")
 def index():
     """トップページ（メモ一覧）"""

@@ -36,11 +36,13 @@
       <pre>{{ note.body }}</pre>
     </div>
 
-    <!-- 末尾の戻りリンク付近に編集導線を追加 -->
+    <!-- 末尾の戻りリンク付近に一覧・編集・削除などの導線を追加 -->
     <div class="row" style="margin-top:18px;">
       <a href="/">← 一覧へ戻る</a>
       <span style="margin:0 8px; color:#999;">|</span>
       <a href="/notes/{{ note.id }}/edit">✏️ このメモを編集</a>
+      <span style="margin:0 8px; color:#999;">|</span>
+      <a href="/notes/{{ note.id }}/delete">🗑️ このメモを削除</a>
     </div>
   </div>
 </body>
