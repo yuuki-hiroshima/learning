@@ -32,6 +32,13 @@
     <a href="/add" style="display:inline-block;background:#333;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;">＋ メモを追加</a>
   </p>
 
+  <!-- 一覧ページの上部に追加：/search へ GET で飛ばすよ〜 -->
+  <form method="get" action="/search" style="margin:10px 0 0;">
+    <input type="text" name="q" placeholder="キーワード検索" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; width:240px;">
+    <button type="submit" style="padding:6px 12px; border:none; background:#333; color:#fff; border-radius:6px; cursor:pointer;">検索</button>
+    <a href="/search" style="margin-left:8px; color:#333; text-decoration:none;">くわしく検索</a>
+  </form>
+
   <!-- {{ notes }} はPythonから受け取ったリストデータ -->
   {% if notes %}
     <table>
