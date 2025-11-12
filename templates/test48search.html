@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>検索結果</title>
+  <style>
+    body { font-family:sans-serif; background:#f7f7f7; margin:32px; }
+    .box { background:#fff; padding:16px; border-radius:8px; max-width:920px; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
+    th { background:#f5f5f5; }
+    .meta { color:#666; font-size:14px; margin-bottom:6px; }
+    .muted { color:#888; font-size:12px; }
+    a { color:#333; text-decoration:none; }
+    .hdr { display:flex; justify-content:space-between; align-items:center; }
+    .input { padding:6px 10px; border:1px solid #ccc; border-radius:6px; width:240px; }
+    .btn { padding:6px 12px; border:none; background:#333; color:#fff; border-radius:6px; cursor:pointer; }
+    mark { background: #fff2a8; padding: 0 2px; border-radius: 2px; } 
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="hdr">
+      <h1 style="margin: 0;">検索</h1>
+      <a href="/" class="muted">← 一覧へ戻る</a>
+    </div>
+
+    <!-- 検索フォーム：GETで /search?q=... へ送る -->
+    <form method="get" action="/search" style="margin-top: 12px;">
+      <!-- q には前回の入力（q）を入れておくと再検索しやすい -->
+      <input class="input" type="text" name="q" placeholder="キーワードを入力" value="{{ q or '' }}">
+      <button class="btn" type="submit">検索</button>
+    </form>
+
+    <!-- 件数メタ情報：count はPython側で数えて渡してるよ〜 -->
+    <p class="meta" style="margin-top: 10px;">
+      🔍️ 「{{ q or '(未入力)'}}」の検索結果：{{ count }} 件
+      <span class="muted">（📆 新しい順に並べ替えています）</span>
+    </p>
+
+    {% if count == 0 %}
+      <p class="muted">該当するメモは見つかりませんでした。</p>
+    {% else %}
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 80px;">ID</th>
+            <th>タイトル</th>
+            <th style="width: 180px;">作成日時</th>
+            <th style="width: 140px;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for it in items %}
+          <tr>
+            <td>#{{ it.id }}</td>
+            <td>
+              <a href="/notes/{{ it.id }}" style="color: #333; text-decoration: none;">{{ it.title_html }}</a>
+              <div class="muted">{{ it.body_snip }}</div>
+            </td>
+            <td>{{ it.created_at }}</td>
+            <td>
+              <a href="/notes/{{ it.id }}/edit" style="margin-right: 8px;">✏️ 編集</a>
+              <a href="/notes/{{ it.id }}/delete" style="color:#c62828">🗑️ 削除</a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</body>
+</html>
