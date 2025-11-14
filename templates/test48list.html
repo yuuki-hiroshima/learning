@@ -1,69 +1,238 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>メモ一覧</title>
+<!DOCTYPE html> <!-- このファイルは「HTMLの文書ですよ〜」とブラウザに教えている -->
+<html lang="ja"> <!-- このページは日本語だよ〜と伝えている -->
+<head> <!-- ここから「頭の情報」（タイトルやCSSなど）を書くところ -->
+  <meta charset="UTF-8"> <!-- 文字コードはUTF-8です（日本語もOKにするおまじない） -->
+  <title>メモ一覧</title> <!-- タブに表示されるページタイトル -->
+
+  <!-- ここから見た目（CSS）の設定だよ〜 -->
   <style>
-    body { font-family: sans-serif; background: #f9f9f9; margin: 40px; }
-    h1 { color: #333; }
-    table { border-collapse: collapse; width: 100%; background: white; }
-    th, td { padding: 8px 12px; border-bottom: 1px solod #ddd; text-align: left; }
-    th { background: #eee; }
+    body {                          /* ページ全体の文字や背景の設定 */
+      font-family: sans-serif;      /* 文字の形を「サンセリフ」にするよ */
+      background: #f7f7f7;          /* 背景色を少しだけグレーっぽくするよ */
+      margin: 32px;                 /* 画面の端から少し内側に余白をあけるよ */
+    }
+
+    .box {                          /* 真ん中の白いカードっぽいエリアの見た目 */
+      background: #ffffff;          /* 背景を白にするよ */
+      padding: 18px;                /* 内側に少し余白をとるよ */
+      border-radius: 8px;           /* 角を少し丸くするよ */
+      max-width: 960px;             /* 横幅の最大サイズを決めて、読みやすくするよ */
+      margin: 0 auto;               /* 左右の余白を自動にして、真ん中に寄せるよ */
+    }
+
+    .hdr {                          /* タイトルとボタンを横に並べるエリア */
+      display: flex;                /* 横並びにするための指定だよ */
+      justify-content: space-between; /* 左右にいい感じに離して配置するよ */
+      align-items: center;          /* 上下の高さをそろえて真ん中に寄せるよ */
+      margin-bottom: 8px;           /* 下に少し余白をあけるよ */
+    }
+
+    .btn-main {                     /* 「新規作成」ボタンの見た目 */
+      padding: 6px 12px;            /* ボタンの中の余白（上下・左右） */
+      background: #333;             /* 背景色を黒っぽい色にするよ */
+      color: #fff;                  /* 文字色は白にするよ */
+      border-radius: 6px;           /* 角を少し丸くするよ */
+      text-decoration: none;        /* 下線を消して、ボタンっぽく見せるよ */
+      font-size: 14px;              /* 文字の大きさ */
+    }
+
+    .link-muted {                   /* 補助リンクの見た目（少し薄めの文字） */
+      font-size: 13px;              /* 文字を少し小さめにするよ */
+      color: #666;                  /* 文字色を少し薄めのグレーにするよ */
+      text-decoration: none;        /* 下線はつけないよ */
+      margin-left: 12px;            /* 左側に少し空きをつくるよ */
+    }
+
+    .msg {                          /* 「追加しました」などのメッセージ用の箱 */
+      padding: 8px 10px;            /* 内側の余白 */
+      border-radius: 6px;           /* 角を丸くする */
+      margin: 10px 0;               /* 上下にすこし余白をとる */
+      font-size: 13px;              /* 文字サイズ */
+    }
+
+    .msg-success {                  /* 追加など、うれしいメッセージ用の色 */
+      background: #e8f5e9;          /* 薄い緑の背景 */
+      border: 1px solid #a5d6a7;    /* 少し濃い緑の枠線 */
+      color: #1b5e20;               /* 文字色も落ち着いた緑にする */
+    }
+
+    .msg-danger {                   /* 削除など、注意のメッセージ用の色 */
+      background: #ffebee;          /* 薄いピンクの背景 */
+      border: 1px solid #ef9a9a;    /* 少し濃いピンクの枠線 */
+      color: #b71c1c;               /* 文字色を赤っぽくする */
+    }
+
+    table {                         /* 一覧の表全体の見た目 */
+      width: 100%;                  /* 横幅いっぱいに広げる */
+      border-collapse: collapse;    /* 罫線の重なりをなくしてスッキリさせる */
+      margin-top: 12px;             /* 上に少し余白をとる */
+    }
+
+    th, td {                        /* 表の「見出し」と「中身」の共通の見た目 */
+      padding: 8px 6px;             /* 内側に余白をとる */
+      border-bottom: 1px solid #eee;/* 下にうっすら線を引いて行を区切る */
+      font-size: 14px;              /* 文字サイズ */
+      text-align: left;             /* 左寄せでそろえる */
+      vertical-align: top;          /* 上寄せにして、複数行でも見やすくする */
+    }
+
+    th {                            /* 表の見出し行だけの見た目 */
+      background: #f5f5f5;          /* 少し背景をグレーにして区別する */
+      font-weight: normal;          /* 太字すぎないように調整する */
+    }
+
+    .col-id {                       /* IDの列だけ、幅を固定する指定 */
+      width: 70px;                  /* ID列の幅を固定してそろえる */
+      white-space: nowrap;          /* 折り返さないようにする */
+    }
+
+    .col-title {                    /* タイトルの列の見た目 */
+      width: 100%;                  /* 残りの幅を広く使うイメージ */
+      max-width: 520px;             /* あまり広がりすぎないように上限を決める */
+      white-space: nowrap;          /* 1行で表示する */
+      overflow: hidden;             /* はみ出した部分を隠す */
+      text-overflow: ellipsis;      /* はみ出したら「…」で省略して見せる */
+    }
+
+    .col-created {                  /* 作成日時の列 */
+      width: 160px;                 /* 幅を固定して並びをそろえる */
+      white-space: nowrap;          /* 1行で表示 */
+    }
+
+    .col-actions {                  /* 操作リンク（編集・削除）の列 */
+      width: 140px;                 /* 幅を固定してそろえる */
+      white-space: nowrap;          /* 折り返さない */
+    }
+
+    .muted {                        /* 補足説明などの薄め文字 */
+      color: #888;                  /* 薄いグレー */
+      font-size: 12px;              /* 小さめの文字 */
+    }
+
+    a {                             /* リンク全般の基本スタイル */
+      color: #333;                  /* 落ち着いた濃いグレー */
+      text-decoration: none;        /* 下線なしにして読みやすく */
+    }
+
+    a:hover {                       /* マウスを乗せたときの見た目 */
+      text-decoration: underline;   /* 下線をつけて「押せる」ことをわかりやすくする */
+    }
+
+    .hdr-right {                         /* 右側の「新規メモ＋検索」をまとめる箱だよ */
+      display: flex;                     /* 中身を横並びにするよ */
+      align-items: center;               /* 高さの真ん中をそろえるよ */
+      gap: 12px;                         /* ボタンやフォームのあいだを少しあけるよ */
+    }
+
+    .search-form {                       /* 検索フォーム全体の箱だよ */
+      display: flex;                     /* 入力欄とボタンを横並びにするよ */
+      align-items: center;               /* 上下の位置をそろえるよ */
+      gap: 8px;                          /* 入力欄とボタンの間を少しあけるよ */
+    }
+
+    .search-input {                      /* キーワード入力用のテキストボックスだよ */
+      padding: 6px 10px;                 /* 中の余白をつけて、押しやすくするよ */
+      border: 1px solid #ccc;            /* うすいグレーの枠線をつけるよ */
+      border-radius: 6px;                /* 角を少し丸くするよ */
+      width: 220px;                      /* 横幅を少し広めにとるよ */
+      font-size: 14px;                   /* 文字の大きさだよ */
+    }
+
+    .btn-search {                        /* 「検索」ボタンの見た目だよ */
+      padding: 6px 12px;                 /* ボタンの内側の余白だよ */
+      border: none;                      /* 余計な枠線はいらないので消すよ */
+      border-radius: 6px;                /* 角を丸くするよ */
+      background: #333;                  /* 背景色を黒っぽくするよ */
+      color: #fff;                       /* 文字色は白にするよ */
+      cursor: pointer;                   /* マウスを乗せると「指マーク」にするよ */
+      font-size: 14px;                   /* 文字サイズだよ */
+    }
   </style>
 </head>
-<body>
-  <h1>メモ一覧</h1>
-  
-  <!-- 追加直後のワンショット通知（保存はもう終わっている状態） -->
-  {% if request.args.get('added') %}
-    <p style="background:#eaffea;border:1px solid #b6e3b6;padding:8px 12px;border-radius:6px;max-width:640px;">
-      ✅️ メモを追加しました。
-    </p>
-  {% endif %}
+<body> <!-- ここから画面に表示される「本体部分」が始まる -->
 
-  <!-- 削除直後のワンショット通知（削除はもう終わっている状態） -->
-  {% if request.args.get('deleted') %}
-    <p style="background:#fff7f7;border:1px solid #f2caca;padding:8px 12px;border-radius:6px;max-width:640px;">
-      🗑️ メモを削除しました。
-    </p>
-  {% endif %}
+  <div class="box"> <!-- 真ん中の白いカードエリア -->
 
-  <p style="margin:12px 0;">
-    <a href="/add" style="display:inline-block;background:#333;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;">＋ メモを追加</a>
-  </p>
+    <div class="hdr"> <!-- 左にタイトル、右にボタンを置くヘッダ部分 -->
+      <h1 style="margin: 0;">メモ一覧</h1> <!-- ページの大きなタイトル -->
 
-  <!-- 一覧ページの上部に追加：/search へ GET で飛ばすよ〜 -->
-  <form method="get" action="/search" style="margin:10px 0 0;">
-    <input type="text" name="q" placeholder="キーワード検索" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; width:240px;">
-    <button type="submit" style="padding:6px 12px; border:none; background:#333; color:#fff; border-radius:6px; cursor:pointer;">検索</button>
-    <a href="/search" style="margin-left:8px; color:#333; text-decoration:none;">くわしく検索</a>
-  </form>
+      <div class="hdr-right"> <!-- 右側のボタンとリンクをまとめる小さな箱 -->
+        <a class="btn-main" href="/add">＋ 新規メモ</a> <!-- 新しくメモを作るボタン -->
+        <!-- 一覧ページの上部に追加：/search へ GET で飛ばすよ〜 -->
+        <form class="search-form" method="get" action="/search">
+          <input class="search-input" type="text" name="q" placeholder="キーワード検索" value="{{ request.args.get('q', '') }}">
+          <button class="btn-search" type="submit">検索</button>
+        </form>
+        <a class="link-muted" href="/search">🔍 詳細検索へ</a> <!-- 検索画面へのリンク -->
+      </div>
+    </div>
 
-  <!-- {{ notes }} はPythonから受け取ったリストデータ -->
-  {% if notes %}
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>タイトル</th>
-        <th>作成日時</th>
-        <th>操作</th>
-      </tr>
+    <!-- ここから「追加・削除が完了したときの小さなメッセージ」 -->
+    {% if request.args.get('added') %}
+      <div class="msg msg-success">
+        ✅ 新しいメモを追加しました。
+      </div>
+    {% endif %}
 
-      <!-- notesの中身を1件ずつ取り出して行を作成 -->
-      {% for note in notes %}
-      <tr>
-        <td>{{ note.id }}</td>
-        <td><a href="/notes/{{ note.id }}" style="color:#333;text-decoration:none;">{{ note.title }}</a></td>
-        <td>{{ note.created_at[:16].replace("T", " ") }}</td>
-        <td>
-          <a href="/notes/{{ note.id }}/edit" style="margin-right:8px;">✏️ 編集</a>
-          <a href="/notes/{{ note.id }}/delete" style="color:#c62828;">🗑️ 削除</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </table>
-  {% else %}
-    <p>まだメモがありません。</p>
-  {% endif %}
+    {% if request.args.get('deleted') %}
+      <div class="msg msg-danger">
+        🗑️ メモを削除しました。
+      </div>
+    {% endif %}
+
+    <!-- メモが1件もない場合のメッセージ -->
+    {% if empty %}
+      <p class="muted">
+        まだメモがありません。<br>
+        右上の「＋ 新規メモ」ボタンから、最初の1件を作ってみましょう。
+      </p>
+    {% else %}
+      <!-- ここからメモ一覧の表 -->
+      <table>
+        <thead> <!-- 表の見出し行 -->
+          <tr>
+            <th class="col-id">ID</th> <!-- メモ番号を表示する列 -->
+            <th class="col-title">タイトル</th> <!-- タイトルを表示する列（長いと…で省略） -->
+            <th class="col-created">作成日時</th> <!-- 作成日時を表示する列 -->
+            <th class="col-actions">操作</th> <!-- 編集・削除リンクの列 -->
+          </tr>
+        </thead>
+        <tbody> <!-- 実際のデータを1行ずつ並べる場所 -->
+
+        {% for note in notes %} <!-- Python側から渡された notes リストを1件ずつ取り出すループ -->
+          <tr> <!-- 1件分のメモを1行として表示するよ -->
+            <td class="col-id">
+              #{{ note.id }} <!-- メモのIDを表示（例: #3 など） -->
+            </td>
+
+            <td class="col-title">
+              <!-- タイトルをクリックすると、そのメモの詳細ページへ移動するリンク -->
+              <a href="/notes/{{ note.id }}">
+                {{ note.title }}
+              </a>
+            </td>
+
+            <td class="col-created">
+              <!-- created_at を「YYYY-MM-DD HH:MM」形式に整えて表示する -->
+              {{ (note.created_at or "")[:16].replace("T", " ") }}
+              {% if note.updated_at %}
+                <div class="muted">更新あり</div> <!-- 更新日時があるときは小さく「更新あり」と表示 -->
+              {% endif %}
+            </td>
+
+            <td class="col-actions">
+              <!-- 編集ページへのリンク -->
+              <a href="/notes/{{ note.id }}/edit" style="margin-right: 8px;">✏️ 編集</a>
+              <!-- 削除確認ページへのリンク -->
+              <a href="/notes/{{ note.id }}/delete" style="color:#c62828;">🗑️ 削除</a>
+            </td>
+          </tr>
+        {% endfor %}
+
+        </tbody>
+      </table>
+    {% endif %}
+
+  </div> <!-- /.box の終わり -->
 </body>
 </html>

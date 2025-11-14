@@ -238,15 +238,15 @@ def edit(note_id):                                               # note_id に�
 
     raw_title = request.form.get("title")                         # フォームから送られてきた「タイトルの生データ」を取り出すよ（まだ検証前）
     raw_body  = request.form.get("body")                          # フォームから送られてきた「本文の生データ」を取り出すよ（まだ検証前）
-    print("[DEBUG][POST] 受け取った raw_title =", raw_title)     # 👀 本当にフォームから届いているか確認するよ
-    print("[DEBUG][POST] 受け取った raw_body  =", raw_body)      # 👀 空文字になっていないかなどを確認できるよ
+    print("[DEBUG][POST] 受け取った raw_title =", raw_title)        # 👀 本当にフォームから届いているか確認するよ
+    print("[DEBUG][POST] 受け取った raw_body  =", raw_body)         # 👀 空文字になっていないかなどを確認できるよ
 
     # ④ POST：フォーム送信（新しい値の入口）
     new_title = validate_title(raw_title)                         # タイトルのチェック用関数に渡して、「きちんとしたタイトル」に整えるよ（空白のみだと None が返る）
     new_body  = validate_body(raw_body)                           # 本文のチェック用関数に渡して、「きちんとした本文」に整えるよ（空なら既定の文になる）
 
-    print("[DEBUG][POST] validate 後の new_title =", new_title)   # 👀 チェック後にどうなったかを出して確認するよ
-    print("[DEBUG][POST] validate 後の new_body  =", new_body)    # 👀 None になっていないかなどを見るよ
+    print("[DEBUG][POST] validate 後の new_title =", new_title)    # 👀 チェック後にどうなったかを出して確認するよ
+    print("[DEBUG][POST] validate 後の new_body  =", new_body)     # 👀 None になっていないかなどを見るよ
 
     # ⑤ 入力エラー：保存はせず、エラーメッセージ付きでフォームへ差し戻す
     if new_title is None:                                         # タイトルの検証に失敗した場合（例：空白しか入っていないなど）
@@ -424,18 +424,18 @@ def delete(note_id):                                                 # note_id �
     print("[DEBUG][POST] 削除前件数 =", before, "削除後件数 =", after)
     # 👀 本当に1件減っているかどうかをチェックできるよ
 
-    if before == after:                                                # 件数が変わっていない = 何も消せていない
+    if before == after:                                                    # 件数が変わっていない = 何も消せていない
         print("[DEBUG][POST] 件数が変わっていません。何も削除されていないようです。")
         # 理論的にはここには来ないはずだけど、安全のためチェックしているよ
         # この場合も一応404にするか、メッセージを出す運用もあり
         abort(404)
 
     # ⑥ 新しいリストを JSON に保存し直す（ここで「本当にファイルが書き変わる」）
-    save_notes(new_list, NOTES_PATH)                                   # 変更後の new_list で notes.json を上書きするよ
+    save_notes(new_list, NOTES_PATH)                                       # 変更後の new_list で notes.json を上書きするよ
     print(f"[DEBUG][POST] ID={note_id} のメモを削除しました。現在の件数: {after}")
 
     # ⑦ 削除が終わったら一覧ページ("/")へ戻す（?deleted=1 は「削除できたよ」の印）
-    return redirect(url_for("index", deleted=1))                        # 一覧ページの index() 関数にバトンを渡すよ
+    return redirect(url_for("index", deleted=1))                           # 一覧ページの index() 関数にバトンを渡すよ
 
 @app.route("/search")                                                      # ブラウザで /search にアクセスされたら、この search() 関数を動かすよ
 def search():                                                              # 「検索画面」と「検索処理」をまとめた関数のスタートだよ
@@ -453,14 +453,14 @@ def search():                                                              # 「
     # ① 入力の取得 ------------------------------------------------------------
     # URL の ?q=... の部分から、検索キーワードを取り出すよ
     q_raw = request.args.get("q", "")                                      # 「q」という名前のパラメータを取り出す（無ければ空文字にする）
-    print("[DEBUG] /search にアクセスされました。q_raw =", q_raw)         # 👀 まずはブラウザからどんな文字が来たかをログに出すよ
+    print("[DEBUG] /search にアクセスされました。q_raw =", q_raw)              # 👀 まずはブラウザからどんな文字が来たかをログに出すよ
 
     # 空白の前後を削って、小文字化したバージョンも作っておく（検索用）
     q = q_raw.strip().lower()                                              # 例：「  Python  」→「python」みたいに整える
 
     # ② 全件ロード ------------------------------------------------------------
     notes = load_notes(NOTES_PATH)                                         # JSONファイルの中身を全部読み込んで、Pythonのリストにするよ
-    print("[DEBUG] 現在のメモ件数 =", len(notes))                           # 👀 そもそも何件の中から探すのかを確認するよ
+    print("[DEBUG] 現在のメモ件数 =", len(notes))                            # 👀 そもそも何件の中から探すのかを確認するよ
 
     # ③ キーワードでフィルタ（部分一致） --------------------------------------
     if q:                                                                  # q が空でないときだけ検索する（何も入ってないなら検索しない）
